@@ -1,0 +1,142 @@
+After your first three moves, instead of adding further pieces you must 
+instead move one of your existing pieces to an empty square that is adjacent 
+vertically, horizontally, or diagonally. 
+Therefore, after your third move you always occupy three squares.
+If you have three pieces on the board and one of your pieces is in the 
+center square, you must either win or vacate the center square in your next 
+move.
+
+At the zeroth step, copy over the entire config and any trivial stuff from
+tic-tac-toe program and start coding!
+
+Firstly, implement a function called AlreadyThree(squares, key) 
+to help determine if the squares already have three 'X's or 'O's
+	function alreadyThree(squares, key) {
+  		let n = 0;
+  		for (let i = 0; i < 9; i++) {
+    		if(squares[i] === key)
+      		n++;
+  		}
+  		return (n === 3)
+	}
+Secondly, implement another function called checkLegitmacy(prev, curr) to 
+check if the current click is legitmate for the replacement for the last 
+removed element:
+	function checkLegitmacy(prev, curr) {
+	  const options = [
+	    [1, 3, 4],
+	    [0, 2, 3, 4, 5],
+	    [1, 4, 5],
+	    [0, 1, 4, 6, 7],
+	    [0, 1, 2, 3, 5, 6, 7, 8],
+	    [1, 2, 4, 7, 8],
+	    [3, 4, 7],
+	    [3, 4, 5, 6, 8],
+	    [4, 5, 7],
+	  ];
+	  return options[prev].includes(curr);
+	}
+
+Thirdly, implement yet another function called checkPossibleWinNext(squares, 
+pos) to check if there is a possible winning move made by the element in pos 
+for the next move.
+	function checkPossibleWinNext(squares, pos) {
+	  for (let i = 0; i < squares.length; i++) {
+	    // for every square
+	    if((squares[i] === null) && (checkLegitmacy(pos,i))) {
+	      // if squares[i] is vacant and it's possible for piece to move 
+	      there
+	      let temp = squares.slice();
+	      let key = temp[pos];
+	      temp[i] = key; 
+	      if(calculateWinner(temp))
+	        // determine if it is possible to win with one piece moved to 
+	        there
+	        return true;
+	    }
+	  }
+	  return false;
+	}
+
+If the current square clicked is occupied with the correct element
+	Call the AlreadyThree by passing the current element into its parameters
+		if there is already three, remove that element for now and call 
+		setState and return for this handleClick operation, and change
+		replaceLastRemoved to true, do not reverse the xIsNext
+else
+	return directly
+
+	if(squares[i] === (this.state.xIsNext ? 'X' : 'O')) {
+      // don't forget the parens
+      // if the squares[i] is already occupied
+      if(alreadyThree(squares, squares[i])) {
+        // if there is already three of them, remove this key
+        squares[i] = null;
+        this.setState({
+          history: history.concat([{
+            squares: squares
+          }]),
+          stepNumber: history.length,
+          lastRemovedPos: i,
+          replaceLastRemoved: true,
+          });
+        return;
+      }
+      else return;
+    }
+
+If replaceLastRemoved is true
+	if checkLegitmacy is true and the squares is empty in i
+		place the removed element i and use setState to update squares
+	else return
+else
+	if alreadyThree returns true
+		return directly
+	else place the element on that spot and update squares
+
+	    if(this.state.replaceLastRemoved) {
+	      // if this key was placed as the replacement for last removed key
+	      if(checkLegitmacy(this.state.lastRemovedPos, i) && !squares[i]) {
+	        // if position is legit for placing and hasn't been occupied
+	        squares[i] = this.state.xIsNext ? 'X' : 'O';
+	        this.({
+	          history: history.concat([{
+	            squaresetStates: squares
+	          }]),
+	          stepNumber: history.length,
+	          xIsNext: !this.state.xIsNext,
+	          lastRemovedPos: -1,
+	          replaceLastRemoved: false,
+	        });
+	      }
+	      // if this is not legit
+	      else return;
+	    }
+
+	    else {
+	      if(alreadyThree(squares, squares[i])) 
+	        return;
+	      squares[i] = this.state.xIsNext ? 'X' : 'O';
+	      this.setState({
+	        history: history.concat([{
+	          squares: squares
+	        }]),
+	        stepNumber: history.length,
+	        xIsNext: !this.state.xIsNext,
+	      });
+	    }
+	  }
+
+Change the jumpTo function so that it will not change the xIsNext while 
+during the removal and replacement steps:
+	  jumpTo(step) {
+	    let a = 0;
+	    if(step <= 6)
+	      a = (step % 2);
+	    if(step > 6)
+	      a = Math.abs(1-((Math.floor(step/2)) % 2));
+	    this.setState({
+	      stepNumber: step,
+	      xIsNext: a === 0,
+	    });
+	  }
