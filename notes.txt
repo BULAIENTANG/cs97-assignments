@@ -1,0 +1,155 @@
+download the source code
+
+write a 'make check' test that examine the output length: 
+    check: 
+        if [ `./randall 1 | wc -c` -eq 1 ]; then echo "passed"; fi;
+
+split the randall into 5 files according to their functionalities.
+including appropriate headers in each functionalities and remove static in front of each function and place the prototypes in the header files.
+
+modify the Makefile so that it could run all .c files
+	randall: *.c
+	$(CC) $(CFLAGS) *.c -o $@
+
+create read_options():
+	
+	create a struct opts object that stores a bunch of boolean functions that is used to indicate the flags and IN/OUT methods used and other parameters
+
+		struct opts {
+		  bool valid;
+		  long long nbytes;
+		  char* data_provided;
+		  unsigned int blockSize;
+		  bool iflag;
+		  bool oflag;
+		  char* iargs;
+		  char* oargs;
+
+		  bool hw_gen;
+		  bool sw_gen;
+		  bool stdout;
+		  bool Nout;
+		};
+	
+	write a read_options function that takes into the arguments passed to main and a opts object called options.
+
+		void read_options(
+		  int argc,
+		  char* argv[],
+		  struct opts* opts
+		);
+
+	use the getopt function to read in -i and -o options, and set the corresponding arguments, setting the block size and boolean values in options object.
+
+		char c;
+	  	while((c = getopt(argc, argv, "i:o:")) != -1) {
+	    switch (c)
+	    {
+	      case 'i':
+	        options->iflag = true;
+	        options->iargs = optarg;
+	        if(!strcmp(options->iargs, "rdrand"))
+	          options->hw_gen = true;
+	        else if(!strcmp(options->iargs, "mrand48_r"))
+	          options->sw_gen = true;
+	        else if(options->iargs[0] == '/') {
+	          options->sw_gen = true;
+	          options->data_provided = options->iargs;
+	        }
+	        options->valid = true; 
+	        break;
+	      case 'o':
+	        options->oflag = true;
+	        options->oargs = optarg;
+	        if(!strcmp(options->oargs, "stdio")) 
+	          options->stdout = true;
+	        else
+	        {
+	          if(atoi(options->oargs) > 0) {
+	            options->Nout = true;
+	            options->blockSize = atoi(options->oargs);
+	          }
+	        }
+	        options->valid = true;
+	        break;
+	      case '?':
+	      case ':':
+	        break;
+	    }
+	  }
+
+	read the number of bytes nbytes using optind in the end:
+
+	    if (optind >= argc) {
+	      return;
+	    }
+	    options->nbytes = atol(argv[optind]);
+	    if (options->nbytes >= 0) {
+	      options->valid = true;
+	    }
+
+	    //default blockSize
+	    if (options->blockSize == 0)
+	      options->blockSize = options->nbytes;
+
+
+Modify the writebytes() function so that it could take in the blockSize as a param, allocate the output buffer using malloc with size of the blockSize if its smaller than the total nbytes; otherwise, simply write all nbytes.
+	
+	bool
+	writebytes (unsigned long long x, int nbytes, int blockSize)
+	{
+	  if(blockSize < nbytes) {
+	    while (nbytes > 0) {
+	      unsigned long long *xptr;
+	      xptr = (unsigned long long *) malloc(blockSize);
+	      xptr = &x;
+	      write(1, xptr, blockSize);
+	      nbytes -= blockSize;
+	    }
+	    return true;
+	  }
+	  do
+	    {
+	      if (putchar (x) < 0)
+		      return false;
+	      x >>= CHAR_BIT;
+	      nbytes--;
+	    }
+	  while (0 < nbytes);
+
+	  return true;
+	}
+
+
+
+Modify the Makefile again to test my program:
+
+??????????????????????????????????????????????????????????????
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
